@@ -60,3 +60,23 @@ py.extension_module(
     dependencies : dep_py,
 )
 ```
+
+## Limited API support
+
+*(New in 1.4)*
+
+Meson version 1.4 extends the support of the `limited_api` keyword to Cython.
+
+```meson
+project('my project', 'cython')
+
+py.extension_module(
+    'foo',
+    'foo.pyx',
+    dependencies : dep_py,
+    limited_api : '3.8'
+)
+```
+
+Cython's support for Python's Limited API was introduced in Cython version 3.0.
+If the user's Cython version is too old, Meson issues a warning but proceeds.

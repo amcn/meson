@@ -173,14 +173,17 @@ class PythonInstallation(_ExternalProgramHolder['PythonExternalProgram']):
             target_suffix = self.limited_api_suffix
 
             limited_api_version_hex = self._convert_api_version_to_py_version_hex(limited_api_version, pydep.version)
-            limited_api_definition = f'-DPy_LIMITED_API={limited_api_version_hex}'
+            limited_api_definitions = [
+              f'-DPy_LIMITED_API={limited_api_version_hex}',
+              '-DCYTHON_LIMITED_API=1'
+            ]
 
             new_c_args = mesonlib.extract_as_list(kwargs, 'c_args')
-            new_c_args.append(limited_api_definition)
+            new_c_args.extend(limited_api_definitions)
             kwargs['c_args'] = new_c_args
 
             new_cpp_args = mesonlib.extract_as_list(kwargs, 'cpp_args')
-            new_cpp_args.append(limited_api_definition)
+            new_cpp_args.extend(limited_api_definitions)
             kwargs['cpp_args'] = new_cpp_args
 
             # When compiled under MSVC, Python's PC/pyconfig.h forcibly inserts pythonMAJOR.MINOR.lib
@@ -211,6 +214,10 @@ class PythonInstallation(_ExternalProgramHolder['PythonExternalProgram']):
                     new_link_args.append(python_windows_release_link_exception)
 
                 kwargs['link_args'] = new_link_args
+
+            cython_compiler = next((c for c in compilers.values() if c.get_id() == 'cython'), None)
+            if cython_compiler is not None and mesonlib.version_compare(cython_compiler.version, '< 3.0.0'):
+                mlog.warning(f'Limited API not supported by Cython versions < 3.0.0 (detected: {cython_compiler.version})', location=self.current_node)
 
         kwargs['dependencies'] = new_deps
 
