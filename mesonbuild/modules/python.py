@@ -216,8 +216,28 @@ class PythonInstallation(_ExternalProgramHolder['PythonExternalProgram']):
                 kwargs['link_args'] = new_link_args
 
             cython_compiler = next((c for c in compilers.values() if c.get_id() == 'cython'), None)
-            if cython_compiler is not None and mesonlib.version_compare(cython_compiler.version, '< 3.0.0'):
-                mlog.warning(f'Limited API not supported by Cython versions < 3.0.0 (detected: {cython_compiler.version})', location=self.current_node)
+            if cython_compiler is not None:
+                # Determine if any of the supplied source files are Cython source.
+                cython_suffixes = cython_compiler.file_suffixes
+                def has_cython_files(args: T.List[BuildTargetSource]):
+                    for arg in args:
+                        if isinstance(arg, StructuredSources):
+                            if has_cython_files(arg.as_list()):
+                                return True
+                            continue
+                        if isinstance(arg, GeneratedList):
+                            if has_cython_files(arg.get_outputs()):
+                                return True
+                            continue
+                        if isinstance(arg, mesonlib.File):
+                            arg = arg.fname
+                        suffix = os.path.splitext(arg)[1][1:].lower()
+                        if suffix in cython_suffixes:
+                            return True
+                    return False
+
+                if mesonlib.version_compare(cython_compiler.version, '< 3.0.0') and has_cython_files(args[1]):
+                    raise mesonlib.MesonException(f'Python Limited API not supported by Cython versions < 3.0.0 (detected {cython_compiler.version})')
 
         kwargs['dependencies'] = new_deps
 
