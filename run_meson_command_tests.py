@@ -212,6 +212,7 @@ class CommandTests(unittest.TestCase):
             mesonout = self._run(python_command + [meson_command, 'runpython'] + cmd, env=env)
             self.assertEqual(pyout, mesonout)
 
+        os.remove(script_file)
 
 if __name__ == '__main__':
     print('Meson build system', meson_version, 'Command Tests')
